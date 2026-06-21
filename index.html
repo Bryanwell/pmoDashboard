@@ -840,10 +840,9 @@ function done(id){
 function actualizarEstadoSheet(threadId){
   const url=localStorage.getItem('apps_script_url');
   if(!url)return;
-  // Petición invisible — img tag no abre ventana ni tiene restricciones CORS para GET
   const sendUrl=`${url}?action=completar&threadId=${encodeURIComponent(threadId)}`;
-  const img=new Image();
-  img.src=sendUrl;
+  // fetch no-cors: petición completamente invisible, sin ventana, sin redirección visible
+  fetch(sendUrl,{method:'GET',mode:'no-cors',credentials:'include'}).catch(()=>{});
 }
 function del(id){tasks=tasks.filter(x=>x.id!==id);save();render();toast('Tarea eliminada');}
 
@@ -971,9 +970,8 @@ function enviarDirecto(){
   });
   const sendUrl=url+(url.includes('?')?'&':'?')+params.toString();
 
-  // Petición invisible con img tag — no abre ventana, no tiene CORS para GET
-  const img=new Image();
-  img.src=sendUrl;
+  // fetch no-cors: invisible, sin ventana, sin pantalla negra
+  fetch(sendUrl,{method:'GET',mode:'no-cors',credentials:'include'}).catch(()=>{});
 
   status.style.cssText='display:block;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px;background:#EDE8DF;color:#555550';
   status.textContent='Enviando...';
