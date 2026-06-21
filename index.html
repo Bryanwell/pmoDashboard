@@ -840,10 +840,10 @@ function done(id){
 function actualizarEstadoSheet(threadId){
   const url=localStorage.getItem('apps_script_url');
   if(!url)return;
+  // Petición invisible — img tag no abre ventana ni tiene restricciones CORS para GET
   const sendUrl=`${url}?action=completar&threadId=${encodeURIComponent(threadId)}`;
-  // window.open silencioso — abre y cierra automáticamente
-  const win=window.open(sendUrl,'_pm_completar');
-  if(win)setTimeout(()=>win.close(),3000);
+  const img=new Image();
+  img.src=sendUrl;
 }
 function del(id){tasks=tasks.filter(x=>x.id!==id);save();render();toast('Tarea eliminada');}
 
@@ -971,24 +971,23 @@ function enviarDirecto(){
   });
   const sendUrl=url+(url.includes('?')?'&':'?')+params.toString();
 
-  // Abrir en pestaña nueva — el usuario ya tiene sesión Google activa,
-  // por lo que doGet se ejecuta con permisos de GmailApp
-  const win=window.open(sendUrl,'_blank');
+  // Petición invisible con img tag — no abre ventana, no tiene CORS para GET
+  const img=new Image();
+  img.src=sendUrl;
 
-  // Esperar 5s y asumir éxito (el doGet responde JSON pero la pestaña lo muestra)
   status.style.cssText='display:block;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px;background:#EDE8DF;color:#555550';
-  status.textContent='Procesando envío... (puedes cerrar la pestaña que se abrió)';
+  status.textContent='Enviando...';
 
+  // Esperar 4s para que el script procese
   setTimeout(()=>{
-    if(win&&!win.closed)win.close();
     status.style.cssText='display:block;padding:8px 12px;border-radius:6px;font-size:12px;margin-bottom:8px;background:#E6F4EA;color:#1B5E20';
-    status.textContent=`✓ Correo enviado a ${tos.join(', ')}${ccs.filter(Boolean).length?' · CC: '+ccs.filter(Boolean).join(', '):''}  — confirma en la pestaña Log de tu Sheet`;
+    status.textContent=`✓ Correo enviado a ${tos.join(', ')}${ccs.filter(Boolean).length?' · CC: '+ccs.filter(Boolean).join(', '):''}`;
     const tid=parseInt(document.getElementById('pt-tid').value||'0');
     const task=tasks.find(x=>x.id===tid);
     if(task){const al=alarms.find(a=>a.id===task.alarmId);if(al){al.sent++;al.st='fire';save();renderAlarms();}}
     btn.innerHTML=svgSend+'✓ Enviado';
-    setTimeout(()=>{closeModal('modal-plantilla');btn.disabled=false;btn.innerHTML=svgSend+'Enviar ahora';},3000);
-  },5000);
+    setTimeout(()=>{closeModal('modal-plantilla');btn.disabled=false;btn.innerHTML=svgSend+'Enviar ahora';},2500);
+  },4000);
 }
 
 function openModal(id){document.getElementById(id).style.display='flex';}
