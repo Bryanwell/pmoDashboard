@@ -1138,14 +1138,20 @@ async function doSync(){
   }
 
   try{
-    const res=await fetch(APPS_SCRIPT_URL);
+    // Recopilar todos los threadIds que el usuario marcó como completados
+    const saved=JSON.parse(localStorage.getItem('pm_tasks_state')||'{}');
+    const completados=Object.entries(saved).filter(([,v])=>v==='completado').map(([k])=>k);
+
+    // Enviar lista de completados junto con la sync
+    const params=new URLSearchParams();
+    if(completados.length) params.set('completados', completados.join('|'));
+
+    const url=completados.length ? `${APPS_SCRIPT_URL}?${params}` : APPS_SCRIPT_URL;
+    const res=await fetch(url);
     const json=await res.json();
 
     if(json.error){toast('Error: '+json.error);btn.disabled=false;btn.querySelector('span').textContent='Sincronizar Gmail';return;}
     if(!json.tasks||!json.tasks.length){toast('Sin tareas en la hoja');btn.disabled=false;btn.querySelector('span').textContent='Sincronizar Gmail';return;}
-
-    // Estados guardados localmente (completados/eliminados por el usuario)
-    const saved=JSON.parse(localStorage.getItem('pm_tasks_state')||'{}');
 
     const sheetTasks=json.tasks.map(t=>({
       id:       t.id,
