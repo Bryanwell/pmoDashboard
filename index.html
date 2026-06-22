@@ -840,11 +840,36 @@ function done(id){
 }
 
 function actualizarEstadoSheet(threadId){
-  const url=localStorage.getItem('apps_script_url');
-  if(!url)return;
-  const sendUrl=`${url}?action=completar&threadId=${encodeURIComponent(threadId)}&token=gbios2026pm`;
-  // Apps Script publicado como anónimo — no necesita credenciales de sesión
-  fetch(sendUrl,{method:'GET',mode:'no-cors'}).catch(()=>{});
+  const url=localStorage.getItem('apps_script_url')||APPS_SCRIPT_DEFAULT;
+  if(!url||!threadId)return;
+
+  // Crear iframe oculto como destino del form
+  const ifrId='_pm_iframe_'+Date.now();
+  const ifr=document.createElement('iframe');
+  ifr.name=ifrId;
+  ifr.style.cssText='display:none;width:0;height:0;border:0;position:absolute;left:-9999px';
+  document.body.appendChild(ifr);
+
+  // Crear form que postea al iframe — evita CORS y redirecciones visibles
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action=url;
+  form.target=ifrId;
+  form.style.display='none';
+
+  [['action','completar'],['threadId',threadId],['token','gbios2026pm']].forEach(([k,v])=>{
+    const inp=document.createElement('input');
+    inp.type='hidden';inp.name=k;inp.value=v;
+    form.appendChild(inp);
+  });
+
+  document.body.appendChild(form);
+  form.submit();
+
+  // Limpiar después de 5s
+  setTimeout(()=>{
+    try{form.remove();ifr.remove();}catch(e){}
+  },5000);
 }
 function del(id){tasks=tasks.filter(x=>x.id!==id);save();render();toast('Tarea eliminada');}
 
